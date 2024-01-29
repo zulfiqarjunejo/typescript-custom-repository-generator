@@ -14,8 +14,15 @@ export const entity: Entity = {
             "type": "string"
         },
         {
-            "comment": "title of the language.",
-            "name": "title",
+            "comment": "locale name of the language",
+            "name": "localeName",
+            "required": true,
+            "searchEnabler": false,
+            "type": "string"
+        },
+        {
+            "comment": "name of the language.",
+            "name": "name",
             "required": true,
             "searchEnabler": false,
             "type": "string"

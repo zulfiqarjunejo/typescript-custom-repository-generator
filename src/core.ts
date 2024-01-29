@@ -27,6 +27,12 @@ export type WithContext = {
  * Options for \`create\` method.
  */
 export type CreateOpts = WithContext & {
+    {{#each searchEnablers}}
+    /**
+     * {{this.comment}}
+     */
+    {{this.name}}: {{this.type}}
+    {{/each}}
     {{#each ordinaryProps}}
     /**
      * {{this.comment}}
@@ -84,7 +90,6 @@ export type UpdateOpts = WithContext & {
      */
     {{this.name}}: {{this.type}}
     {{/each}}
-
     {{#each ordinaryProps}}
     /**
      * (Optional) {{this.comment}}
