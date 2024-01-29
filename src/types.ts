@@ -4,6 +4,7 @@ export type Entity = {
 };
 
 export type EntityProp = {
+    "comment": string;
     "name": string;
     "required"?: boolean;
     "searchEnabler"?: boolean;

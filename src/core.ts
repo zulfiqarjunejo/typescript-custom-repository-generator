@@ -1,11 +1,6 @@
 import { capitalize } from 'lodash';
 import handlebars from './handlebars';
-import { Entity } from "./types";
-
-type SearchEnabler = {
-    name: string;
-    "type": string;
-};
+import { Entity, EntityProp } from "./types";
 
 type GenerateRepositoryOpts = {
     entity: Entity;
@@ -25,41 +20,131 @@ export type WithContext = {
     /**
      * context, if available.
      */
-    context?: IDataContext;
+    context?: Nilable<IDataContext>;
 };
 
-export type CreateOpts = MaybeWithContext & {
-    {{#each props}}
+/**
+ * Options for \`create\` method.
+ */
+export type CreateOpts = WithContext & {
+    {{#each ordinaryProps}}
+    /**
+     * {{this.comment}}
+     */
     {{this.name}}: {{this.type}};
     {{/each}}
 };
 
 {{#each searchEnablers}}
-export type FindBy{{capitalize this.name}}Opts = {
+/**
+ * Options for \`findBy{{capitalize this.name}}\` method.
+ */
+export type FindBy{{capitalize this.name}}Opts = WithContext & {
+    /**
+     * {{this.comment}}
+     */
     {{this.name}}: {{this.type}};
+
+    /**
+     * Throw error if not found.
+     *
+     * @default \`false\`
+     */
+    throwIfNotFound?: Nilable<boolean>;
 };
 {{/each}}
 
-export interface I{{capitalize entityName}}Repository {
-    create(opts: CreateOpts): Promise<${capitalizedEntityName} | undefined>;
+/**
+ * Options for \`list\` method.
+ */
+export type ListOpts = WithContext & {
+};
+
+/**
+ * Options for \`toView\` method.
+ */
+export type ToViewOpts = WithContext & {
+    /**
+     * The entity.
+     */
+    {{this.entityName}}: ${capitalizedEntityName};
+    /**
+     * Language used to return localized resource.
+     */
+    lang: string;
+};
+
+/**
+ * Options for \`update\` method.
+ */
+export type UpdateOpts = WithContext & {
     {{#each searchEnablers}}
-    findBy{{capitalize this.name}}(opts: FindBy{{capitalize this.name}}Opts): Promise<${capitalizedEntityName} | undefined>;
+    /**
+     * {{this.comment}}
+     */
+    {{this.name}}: {{this.type}}
     {{/each}}
+
+    {{#each ordinaryProps}}
+    /**
+     * (Optional) {{this.comment}}
+     */
+    {{this.name}}?: {{this.type}};
+    {{/each}}
+};
+
+/**
+ * I${capitalizedEntityName}Repository represents blueprint for {{this.entityName}} repository.
+ */
+export interface I{{capitalize entityName}}Repository {
+    /**
+     * Creates a new entry of {{this.entityName}}.
+     * 
+     * @param opts - The options.
+     * @returns A promise that resolves to the new entry.
+     */
+    create(opts: CreateOpts): Promise<${capitalizedEntityName}>;
+    {{#each searchEnablers}}
+    /**
+     * Find an entry specified by {{this.name}}.
+     * 
+     * @param opts - The options.
+     * @returns A promise that resolves to the entry.
+     */
+    findBy{{capitalize this.name}}(opts: FindBy{{capitalize this.name}}Opts): Promise<Nullable<${capitalizedEntityName}>>; 
+    {{/each}}
+    /**
+     * Lists all entries of {{this.entityName}}.
+     * 
+     * @param opts - The options.
+     * @returns A promise that resolves to list of entries.
+     */
     list(opts: ListOpts): Promise<${capitalizedEntityName}[]>;
-    toView(opts: ToViewOpts): Promise<${capitalizedEntityName}View>;
-    update(opts: UpdateOpts): Promise<${capitalizedEntityName} | undefined>;
+    /**
+     * Converts an entry of {{this.entityName}} to its view.
+     * 
+     * @param opts - The options.
+     * @returns A promise that resolves to the view.
+     */
+    toView(opts: ToViewOpts): Promise<I${capitalizedEntityName}View>;
+    /**
+     * Updates an existing entry of {{this.entityName}}.
+     * 
+     * @param opts - The options.
+     * @returns A promise that resolves to the entry.
+     */
+    update(opts: UpdateOpts): Promise<Nullable<${capitalizedEntityName}>>;
 };
 `;
 
-    const searchEnablers: SearchEnabler[] = [];
+    const ordinaryProps: EntityProp[] = [];
+    const searchEnablers: EntityProp[] = [];
+
     for (const prop of props) {
         if (prop.searchEnabler) {
-            const se: SearchEnabler = {
-                "name": prop.name,
-                "type": prop.type
-            };
-
-            searchEnablers.push(se);
+            searchEnablers.push(prop);
+        } else {
+            ordinaryProps.push(prop);
         }
     }
 
@@ -67,7 +152,7 @@ export interface I{{capitalize entityName}}Repository {
 
     const templateData = {
         "entityName": name,
-        "props": props,
+        "ordinaryProps": ordinaryProps,
         "searchEnablers": searchEnablers,
     };
 
